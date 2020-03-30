@@ -75,8 +75,8 @@ namespace MarchingCubes.Examples
             {
                 density = CalculateDensity(worldPositionX, worldPositionY, worldPositionZ);
             }
-
             densities[index] = math.clamp(density, -1, 1);
+
         }
 
         /// <summary>
@@ -90,7 +90,7 @@ namespace MarchingCubes.Examples
         public float CalculateDensity(int worldPositionX, int worldPositionY, int worldPositionZ)
         {
             float heightmapValue = heightmapData[worldPositionX + worldPositionZ * heightmapWidth];
-            float h = amplitude * heightmapValue;
+            float h = amplitude * heightmapValue; //amplitude = 30 , 40 , 34  bug
             return worldPositionY - h - heightOffset;
         }
     }

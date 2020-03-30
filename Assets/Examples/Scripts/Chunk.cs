@@ -10,58 +10,64 @@ namespace MarchingCubes.Examples
     /// <summary>
     /// The base class for all chunks
     /// </summary>
-    [RequireComponent(typeof(MeshRenderer), typeof(MeshFilter))]
+    [RequireComponent(typeof(MeshRenderer), typeof(MeshFilter), typeof(MeshCollider))]
     public abstract class Chunk : MonoBehaviour
     {
         /// <summary>
         /// The density level where a surface will be created. Densities below this will be inside the surface (solid),
         /// and densities above this will be outside the surface (air)
         /// </summary>
-        private float _isolevel;
+        [SerializeField, HideInInspector] protected float _isolevel;
 
         /// <summary>
         /// The chunk's MeshFilter
         /// </summary>
-        private MeshFilter _meshFilter;
+        [SerializeField, HideInInspector] protected MeshFilter _meshFilter;
 
         /// <summary>
         /// The chunk's MeshCollider
         /// </summary>
-        private MeshCollider _meshCollider;
+        [SerializeField, HideInInspector] protected MeshCollider _meshCollider;
+
+        [SerializeField, HideInInspector] private int _chunkSize;
+
 
         /// <summary>
         /// The chunk's cached Mesh so a new one doesn't always have to be created
         /// </summary>
-        private Mesh _mesh;
+        protected Mesh _mesh;
 
         /// <summary>
         /// The chunk's density field
         /// </summary>
-        private NativeArray<float> _densities;
+        protected NativeArray<float> _densities;
 
         /// <summary>
         /// The vertices from the mesh generation job
         /// </summary>
-        private NativeArray<Vector3> _outputVertices;
+        protected NativeArray<Vector3> _outputVertices;
 
         /// <summary>
         /// The triangles from the mesh generation job
         /// </summary>
-        private NativeArray<int> _outputTriangles;
+        protected NativeArray<int> _outputTriangles;
 
         /// <summary>
         /// Stores the density modifications because the densities can not be modified while a job that requires them is running.
+        /// 存储密度修改，因为在运行需要密度的作业时无法修改密度。
         /// </summary>
         protected List<(int index, float density)> _densityModifications;
 
         /// <summary>
         /// An incremental counter that keeps track of a single integer inside the mesh generation job. This is because the jobs
         /// can not modify a shared integer because of race conditions.
+        /// 一个增量计数器，用于跟踪网格生成作业中的单个整数。 这是因为作业由于竞争条件而无法修改共享整数。
         /// </summary>
         private Counter _counter;
 
         /// <summary>
         /// Is the mesh being generated
+        /// 是否正在生成网格
         /// </summary>
         private bool _creatingMesh;
 
@@ -73,7 +79,7 @@ namespace MarchingCubes.Examples
         /// <summary>
         /// The chunk's size. This represents the width, height and depth in Unity units.
         /// </summary>
-        public int ChunkSize { get; private set; }
+        public int ChunkSize { get => _chunkSize; protected set => _chunkSize = value; }
 
         /// <summary>
         /// The chunk's density field
@@ -86,11 +92,13 @@ namespace MarchingCubes.Examples
 
         /// <summary>
         /// Density Job Calculation job's handle
+        /// 密度作业计算作业的句柄
         /// </summary>
         public JobHandle DensityJobHandle { get; set; }
 
         /// <summary>
         /// Mesh generation job's handle
+        /// 网格生成作业的句柄
         /// </summary>
         public JobHandle MarchingCubesJobHandle { get; set; }
 
@@ -98,8 +106,9 @@ namespace MarchingCubes.Examples
         {
             _meshFilter = GetComponent<MeshFilter>();
             _meshCollider = GetComponent<MeshCollider>();
-            _mesh = new Mesh();
-            _densityModifications = new List<(int index, float density)>();
+            VariablesCheck();
+            StartDensityCalculation();
+            StartMeshGeneration();
         }
 
         protected virtual void Update()
@@ -123,44 +132,68 @@ namespace MarchingCubes.Examples
         /// <summary>
         /// Disposes the NativeArrays that this chunk has.
         /// </summary>
-        private void Dispose()
+        public void Dispose()
         {
             MarchingCubesJobHandle.Complete();
-            _densities.Dispose();
-            _outputVertices.Dispose();
-            _outputTriangles.Dispose();
+            if (_densities.IsCreated) _densities.Dispose();
+            if (_outputVertices.IsCreated) _outputVertices.Dispose();
+            if (_outputTriangles.IsCreated) _outputTriangles.Dispose();
         }
 
         /// <summary>
         /// Initializes the chunk and starts generating the mesh.
+        /// 
+        /// 
+        /// I change this function. now this function only run in editor mode.
         /// </summary>
         /// <param name="chunkSize">The chunk's size. This represents the width, height and depth in Unity units.</param>
         /// <param name="isolevel">The density level where a surface will be created. Densities below this will be inside the surface (solid), and densities above this will be outside the surface (air)</param>
         /// <param name="coordinate">The chunk's coordinate</param>
         public void Initialize(int chunkSize, float isolevel, int3 coordinate)
         {
+            _meshFilter = GetComponent<MeshFilter>();
+            _meshCollider = GetComponent<MeshCollider>();
+
             _isolevel = isolevel;
             Coordinate = coordinate;
             ChunkSize = chunkSize;
-            
-            transform.position = coordinate.ToVectorInt() * ChunkSize;
+
+            transform.localPosition = coordinate.ToVectorInt() * ChunkSize;
             name = $"Chunk_{coordinate.x}_{coordinate.y}_{coordinate.z}";
 
-            Densities = new NativeArray<float>((ChunkSize + 1) * (ChunkSize + 1) * (ChunkSize + 1), Allocator.Persistent);
-            _outputVertices = new NativeArray<Vector3>(15 * ChunkSize * ChunkSize * ChunkSize, Allocator.Persistent);
-            _outputTriangles = new NativeArray<int>(15 * ChunkSize * ChunkSize * ChunkSize, Allocator.Persistent);
+            VariablesCheck();
 
             StartDensityCalculation();
             StartMeshGeneration();
+            CompleteMeshGeneration();
+
+            Dispose();
+
+        }
+
+        /// <summary>
+        /// In editor mode,variables maybe null; so check
+        /// </summary>
+        public void VariablesCheck()
+        {
+            if (!Densities.IsCreated) Densities = new NativeArray<float>((ChunkSize + 1) * (ChunkSize + 1) * (ChunkSize + 1), Allocator.Persistent);
+            if (!_outputVertices.IsCreated) _outputVertices = new NativeArray<Vector3>(15 * ChunkSize * ChunkSize * ChunkSize, Allocator.Persistent);
+            if (!_outputTriangles.IsCreated) _outputTriangles = new NativeArray<int>(15 * ChunkSize * ChunkSize * ChunkSize, Allocator.Persistent);
+            if (_densityModifications == null) _densityModifications = new List<(int index, float density)>();
+            _densityModifications.Clear();
+
+            if (_mesh == null) _mesh = new Mesh();
         }
 
         /// <summary>
         /// Starts the density calculation job
+        /// 开始密度计算工作
         /// </summary>
         public abstract void StartDensityCalculation();
 
         /// <summary>
         /// Starts the mesh generation job
+        /// 开始网格生成作业
         /// </summary>
         public void StartMeshGeneration()
         {
@@ -192,6 +225,7 @@ namespace MarchingCubes.Examples
 
         /// <summary>
         /// Completes the mesh generation job and updates the MeshFilter's and the MeshCollider's meshes.
+        /// 完成网格生成作业，并更新MeshFilter和MeshCollider的网格。
         /// </summary>
         private void CompleteMeshGeneration()
         {
@@ -199,7 +233,7 @@ namespace MarchingCubes.Examples
 
             Vector3[] vertices = new Vector3[_counter.Count * 3];
             int[] triangles = new int[_counter.Count * 3];
-            
+
             if (_counter.Count * 3 > 0)
             {
                 _outputVertices.Slice(0, vertices.Length).CopyToFast(vertices);
@@ -216,6 +250,7 @@ namespace MarchingCubes.Examples
             _meshFilter.sharedMesh = _mesh;
             _meshCollider.sharedMesh = _mesh;
 
+
             _creatingMesh = false;
         }
 
@@ -226,7 +261,7 @@ namespace MarchingCubes.Examples
         /// <param name="y">The density's y position inside the chunk (valid values: 0 to chunkSize+1)</param>
         /// <param name="z">The density's z position inside the chunk (valid values: 0 to chunkSize+1)</param>
         /// <returns>The density at that local-space position</returns>
-        public float GetDensity(int x, int y, int z)
+        public virtual float GetDensity(int x, int y, int z)
         {
             return Densities[x * (ChunkSize + 1) * (ChunkSize + 1) + y * (ChunkSize + 1) + z];
         }
@@ -248,7 +283,7 @@ namespace MarchingCubes.Examples
         /// <param name="x">The density's x position inside the chunk (valid values: 0 to chunkSize+1)</param>
         /// <param name="y">The density's y position inside the chunk (valid values: 0 to chunkSize+1)</param>
         /// <param name="z">The density's z position inside the chunk (valid values: 0 to chunkSize+1)</param>
-        public void SetDensity(float density, int x, int y, int z)
+        public virtual void SetDensity(float density, int x, int y, int z)
         {
             _densityModifications.Add((x * (ChunkSize + 1) * (ChunkSize + 1) + y * (ChunkSize + 1) + z, density));
         }

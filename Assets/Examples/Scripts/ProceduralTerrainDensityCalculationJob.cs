@@ -20,7 +20,7 @@ namespace MarchingCubes.Examples
         /// The sampling point's offset
         /// </summary>
         [ReadOnly] public int3 offset;
-        
+
         /// <summary>
         /// The chunk size
         /// </summary>
@@ -72,7 +72,8 @@ namespace MarchingCubes.Examples
         /// <param name="octaveCount">How many layers of noise to combine</param>
         /// <returns>The sampled noise value</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private float OctaveNoise(float x, float y, float frequency, int octaveCount){
+        private float OctaveNoise(float x, float y, float frequency, int octaveCount)
+        {
             float value = 0;
 
             for (int i = 0; i < octaveCount; i++)

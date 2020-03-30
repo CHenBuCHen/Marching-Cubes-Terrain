@@ -13,17 +13,17 @@ namespace MarchingCubes.Examples
         /// The frequency of the noise
         /// </summary>
         [SerializeField] private float noiseFrequency;
-        
+
         /// <summary>
         /// How many octaves the noise will have
         /// </summary>
         [SerializeField] private int noiseOctaveCount;
-        
+
         /// <summary>
         /// The height multiplier
         /// </summary>
         [SerializeField] private float amplitude;
-        
+
         /// <summary>
         /// Moves the height up and down
         /// </summary>
@@ -33,17 +33,17 @@ namespace MarchingCubes.Examples
         /// The frequency of the noise
         /// </summary>
         public float NoiseFrequency { get => noiseFrequency; set => noiseFrequency = value; }
-        
+
         /// <summary>
         /// How many octaves the noise will have
         /// </summary>
         public int NoiseOctaveCount { get => noiseOctaveCount; set => noiseOctaveCount = value; }
-        
+
         /// <summary>
         /// The height multiplier
         /// </summary>
         public float Amplitude { get => amplitude; set => amplitude = value; }
-        
+
         /// <summary>
         /// Moves the height up and down
         /// </summary>

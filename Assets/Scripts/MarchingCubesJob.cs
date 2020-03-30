@@ -17,18 +17,18 @@ namespace MarchingCubes
         /// The densities to generate the mesh off of
         /// </summary>
         [ReadOnly] public NativeArray<float> densities;
-        
+
         /// <summary>
         /// The density level where a surface will be created. Densities below this will be inside the surface (solid),
         /// and densities above this will be outside the surface (air)
         /// </summary>
         [ReadOnly] public float isolevel;
-        
+
         /// <summary>
         /// The chunk's size. This represents the width, height and depth in Unity units.
         /// </summary>
         [ReadOnly] public int chunkSize;
-        
+
         /// <summary>
         /// The counter to keep track of the triangle index
         /// </summary>
@@ -38,7 +38,7 @@ namespace MarchingCubes
         /// The generated vertices
         /// </summary>
         [NativeDisableParallelForRestriction, WriteOnly] public NativeArray<Vector3> vertices;
-        
+
         /// <summary>
         /// The generated triangles
         /// </summary>
@@ -55,7 +55,7 @@ namespace MarchingCubes
                 index / (chunkSize * chunkSize),
                 index / chunkSize % chunkSize,
                 index % chunkSize);
-            
+
             VoxelCorners<float> densities = GetDensities(voxelLocalPosition);
 
             int cubeIndex = CalculateCubeIndex(densities, isolevel);
@@ -73,7 +73,7 @@ namespace MarchingCubes
             // Index at the beginning of the row
             int rowIndex = 15 * cubeIndex;
 
-            for (int i = 0; LookupTables.TriangleTable[rowIndex+i] != -1 && i < 15; i += 3)
+            for (int i = 0; LookupTables.TriangleTable[rowIndex + i] != -1 && i < 15; i += 3)
             {
                 int triangleIndex = counter.Increment() * 3;
 
@@ -159,8 +159,8 @@ namespace MarchingCubes
             {
                 if ((edgeIndex & (1 << i)) == 0) { continue; }
 
-                int edgeStartIndex = LookupTables.EdgeIndexTable[2*i+0];
-                int edgeEndIndex = LookupTables.EdgeIndexTable[2*i+1];
+                int edgeStartIndex = LookupTables.EdgeIndexTable[2 * i + 0];
+                int edgeEndIndex = LookupTables.EdgeIndexTable[2 * i + 1];
 
                 int3 corner1 = voxelCorners[edgeStartIndex];
                 int3 corner2 = voxelCorners[edgeEndIndex];

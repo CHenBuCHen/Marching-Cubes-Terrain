@@ -20,6 +20,7 @@ namespace MarchingCubes.Examples
 
         private void Awake()
         {
+            //Amplitude 振幅
             heightmapTerrainSettings = new HeightmapTerrainSettings(heightmapTerrainSettings.Heightmap, heightmapTerrainSettings.Amplitude, heightmapTerrainSettings.HeightOffset);
         }
 
@@ -39,8 +40,8 @@ namespace MarchingCubes.Examples
         /// </summary>
         private void CreateHeightmapTerrain()
         {
-            int chunkCountX = Mathf.CeilToInt((float) (heightmapTerrainSettings.Width - 1) / ChunkSize);
-            int chunkCountZ = Mathf.CeilToInt((float) (heightmapTerrainSettings.Height - 1) / ChunkSize);
+            int chunkCountX = Mathf.CeilToInt((float)(heightmapTerrainSettings.Width - 1) / ChunkSize);
+            int chunkCountZ = Mathf.CeilToInt((float)(heightmapTerrainSettings.Height - 1) / ChunkSize);
             int chunkCountY = Mathf.CeilToInt(heightmapTerrainSettings.Amplitude / ChunkSize);
 
             for (int x = 0; x < chunkCountX; x++)

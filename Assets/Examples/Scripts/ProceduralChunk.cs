@@ -34,7 +34,7 @@ namespace MarchingCubes.Examples
         public override void StartDensityCalculation()
         {
             MarchingCubesJobHandle.Complete();
-            
+
             int3 worldPosition = Coordinate * ChunkSize;
 
             var job = new ProceduralTerrainDensityCalculationJob
@@ -44,7 +44,7 @@ namespace MarchingCubes.Examples
                 chunkSize = ChunkSize + 1, // +1 because ChunkSize is the amount of "voxels", and that +1 is the amount of density points
                 proceduralTerrainSettings = World.ProceduralTerrainSettings
             };
-            
+
             DensityJobHandle = job.Schedule(Densities.Length, 256);
         }
     }

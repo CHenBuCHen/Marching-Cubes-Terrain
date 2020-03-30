@@ -96,7 +96,7 @@ namespace MarchingCubes.Examples
                         // Make sure that there is a chunk at that coordinate
                         bool chunkExists = GetOrCreateChunk(chunkCoordinate, out Chunk chunk);
                         if (!chunkExists)
-                        { 
+                        {
                             Chunks.Add(chunkCoordinate, chunk);
                         }
                     }
@@ -105,7 +105,7 @@ namespace MarchingCubes.Examples
 
             _startPos = playerPos;
         }
-        
+
         /// <summary>
         /// Ensures that a chunk exists at a coordinate. It either moves (from availableChunks) or instantiates a chunk
         /// </summary>

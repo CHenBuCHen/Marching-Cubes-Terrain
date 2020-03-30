@@ -14,7 +14,7 @@ namespace MarchingCubes
         /// The allocator for the counter
         /// </summary>
         private Allocator allocator;
-        
+
         /// <summary>
         /// The pointer to the value
         /// </summary>
